@@ -212,6 +212,17 @@ def nearest_multiple( a, b ):   # returns number smaller than a, which is the ne
 
 # can be used for test dataset as well
 def build_dataset(path="Preproc/Train/", load_frac=1.0, batch_size=None, tile=False, max_per_class=0):
+    '''
+
+    :param path:
+    :param load_frac:
+    :param batch_size:
+    :param tile:
+    :param max_per_class:
+    :return:
+        X: 梅尔频谱图数据
+        Y: onehot编码的label
+    '''
 
     class_names = get_class_names(path=path)
     print("class_zie = ", len(class_names))

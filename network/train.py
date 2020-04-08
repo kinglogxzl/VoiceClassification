@@ -57,9 +57,43 @@ def train_network(weights_file="weights.hdf5", classpath="Preproc/Train/",
     # Score the model against Test dataset
     X_test, Y_test, paths_test, class_names_test  = build_dataset(path=classpath+"../Test/", tile=tile)
     assert( class_names == class_names_test )
-    score = model.evaluate(X_test, Y_test, verbose=0)
-    print('Test loss:', score[0])
-    print('Test accuracy:', score[1])
+    # score = model.evaluate(X_test, Y_test, verbose=0)
+    # print('Test loss:', score[0])
+    # print('Test accuracy:', score[1])
+    predict = model.predict(X_test)
+    predict = np.argmax(predict, axis=1)
+    Y_test = np.argmax(Y_test, axis=1)
+    class_acc = {}
+    for item in Y_test:
+        if item not in class_acc.keys():
+            class_acc[item] = 1
+        else:
+            class_acc[item] += 1
+    correct_class = {item: 0 for item in class_acc.keys()}
+    correct_sum = 0
+    for i, item in enumerate(predict):
+        if item == Y_test[i]:
+            correct_class[item] += 1
+            correct_sum += 1
+    # 按照正确数量排序
+    correct_class = sorted(correct_class.items(), key=lambda item: item[1], reverse=True)
+    import codecs
+    c_num_to_name = {}
+    labelf_name = '/home/zlxu/work/VoiceClassification/data/per_label.txt'
+    f = codecs.open(labelf_name, 'r', encoding='utf-8')
+    for line in f.readlines():
+        item = line.strip().split('\t')
+        c_num_to_name[item[1]] = item[0]
+    print("=============总准确率=============")
+    print("总样本量: ", len(Y_test), "\t准确率: ", round(correct_sum / len(Y_test), 4))
+    print("=============各类别准确率=============")
+    for key, value in correct_class:
+        if class_names[key] not in c_num_to_name.keys():
+            cla_name = '*****标识错误*****'
+        else:
+            cla_name = c_num_to_name[class_names[key]]
+        print("类别: ", class_names[key], "\t样本量: ", class_acc[key], "\t准确率: ", round(value / class_acc[key], 4),
+              '\t类别名:', cla_name)
 
 
 if __name__ == '__main__':
@@ -69,7 +103,7 @@ if __name__ == '__main__':
         help='weights file (in .hdf5)', default="weights.hdf5")
     parser.add_argument('-c', '--classpath', #type=argparse.string,
         help='Train dataset directory with list of classes', default="/data/voice/logmeled/Train/")
-    parser.add_argument('--epochs', default=50, type=int, help="Number of iterations to train for")
+    parser.add_argument('--epochs', default=1, type=int, help="Number of iterations to train for")
     parser.add_argument('--batch_size', default=40, type=int, help="Number of clips to send to GPU at once")
     parser.add_argument('--val', default=0.2, type=float, help="Fraction of train to split off for validation")
     parser.add_argument("--tile", help="tile mono spectrograms 3 times for use with imagenet models",action="store_true")

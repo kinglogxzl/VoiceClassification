@@ -193,6 +193,8 @@ def freeze_layers(model, train_last=3):
     return model
 
 
+
+
 # This is the main routine for setting up a model
 def setup_model(X, class_names, nb_layers=4, try_checkpoint=True,
     weights_file='weights.hdf5', quiet=False, missing_weights_fatal=False, multi_tag=False):
