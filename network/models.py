@@ -11,6 +11,8 @@ from keras.utils import plot_model
 from keras.layers.advanced_activations import ELU
 from keras.optimizers import SGD, Adam
 
+from keras.layers import Reshape
+
 from os.path import isfile
 
 from network.muti_gpu import *
@@ -30,18 +32,19 @@ def MyCNN_Keras2(X_shape, nb_classes, nb_layers=4):
     K.set_image_data_format('channels_last')                   # SHH changed on 3/1/2018 b/c tensorflow prefers channels_last
 
     nb_filters = 32  # number of convolutional filters = "feature maps"
+    # nb_filters2 = 16
     kernel_size = (3, 3)  # convolution kernel size
     pool_size = (2, 2)  # size of pooling area for max pooling
-    cl_dropout = 0.5    # conv. layer dropout
-    dl_dropout = 0.6    # dense layer dropout
+    cl_dropout = 0.25    # conv. layer dropout
+    dl_dropout = 0.47    # dense layer dropout
 
-    print(" MyCNN_Keras2: X_shape = ",X_shape,", channels = ",X_shape[3])
+    print("MyCNN_Keras2: X_shape = ",X_shape,", channels = ",X_shape[3])
     input_shape = (X_shape[1], X_shape[2], X_shape[3])
     model = Sequential()
-    model.add(Conv2D(nb_filters, kernel_size, padding='same', input_shape=input_shape, name="Input"))
+    model.add(Conv2D(nb_filters, kernel_size, input_shape=input_shape,padding='same', name="Input"))
     model.add(MaxPooling2D(pool_size=pool_size))
     model.add(Activation('relu'))        # Leave this relu & BN here.  ELU is not good here (my experience)
-    model.add(BatchNormalization(axis=-1))  # axis=1 for 'channels_first'; but tensorflow preferse channels_last (axis=-1)
+    # model.add(BatchNormalization(axis=-1))  # axis=1 for 'channels_first'; but tensorflow preferse channels_last (axis=-1)
 
     for layer in range(nb_layers-1):   # add more layers than just the first
         model.add(Conv2D(nb_filters, kernel_size, padding='same'))
@@ -50,6 +53,8 @@ def MyCNN_Keras2(X_shape, nb_classes, nb_layers=4):
         model.add(Dropout(cl_dropout))
         #model.add(BatchNormalization(axis=-1))  # ELU authors reccommend no BatchNorm. I confirm.
 
+    model.add(Reshape((39, -1)))
+    model.add(LSTM(50, return_sequences=True,dropout=0.3,recurrent_dropout=0.3))
     model.add(Flatten())
     model.add(Dense(128))            # 128 is 'arbitrary' for now
     #model.add(Activation('relu'))   # relu (no BN) works ok here, however ELU works a bit better...
@@ -265,6 +270,6 @@ def setup_model(X, class_names, nb_layers=4, try_checkpoint=True,
         serial_model.summary()  # print out the model layers
 
     # print model
-    plot_model(serial_model, to_file='model.png', show_shapes=True)
-
+    plot_model(serial_model, to_file='model.png', show_shapes=True
+    )
     return model, serial_model   # fchollet says to hang on to the serial model for checkpointing
