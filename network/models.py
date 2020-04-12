@@ -4,7 +4,7 @@ from keras import backend as K
 import keras
 import tensorflow as tf
 from keras.models import Sequential, Model, load_model, save_model
-from keras.layers import Input, Dense, TimeDistributed, LSTM, Dropout, Activation
+from keras.layers import Input, Dense, TimeDistributed, LSTM, Dropout, Activation, Reshape, Permute
 from keras.layers import Convolution2D, MaxPooling2D, Flatten, Conv2D
 from keras.layers.normalization import BatchNormalization
 from keras.utils import plot_model
@@ -44,6 +44,7 @@ def MyCNN_Keras2(X_shape, nb_classes, nb_layers=4):
     model.add(BatchNormalization(axis=-1))  # axis=1 for 'channels_first'; but tensorflow preferse channels_last (axis=-1)
 
     for layer in range(nb_layers-1):   # add more layers than just the first
+        nb_filters = nb_filters*2
         model.add(Conv2D(nb_filters, kernel_size, padding='same'))
         model.add(MaxPooling2D(pool_size=pool_size))
         model.add(Activation('elu'))
@@ -51,7 +52,7 @@ def MyCNN_Keras2(X_shape, nb_classes, nb_layers=4):
         #model.add(BatchNormalization(axis=-1))  # ELU authors reccommend no BatchNorm. I confirm.
 
     model.add(Flatten())
-    model.add(Dense(128))            # 128 is 'arbitrary' for now
+    model.add(Dense(256))            # 128 is 'arbitrary' for now
     #model.add(Activation('relu'))   # relu (no BN) works ok here, however ELU works a bit better...
     model.add(Activation('elu'))
     model.add(Dropout(dl_dropout))
@@ -59,6 +60,93 @@ def MyCNN_Keras2(X_shape, nb_classes, nb_layers=4):
     model.add(Activation("softmax",name="Output"))
     return model
 
+# def CNN_LSTM(X_shape, nb_classes, nb_layers=4):
+#     # Inputs:
+#     #    X_shape = [ # spectrograms per batch, # audio channels, # spectrogram freq bins, # spectrogram time bins ]
+#     #    nb_classes = number of output n_classes
+#     #    nb_layers = number of conv-pooling sets in the CNN
+#     from keras import backend as K
+#     K.set_image_data_format('channels_last')                   # SHH changed on 3/1/2018 b/c tensorflow prefers channels_last
+#
+#     nb_filters = 32  # number of convolutional filters = "feature maps"
+#     kernel_size = (3, 3)  # convolution kernel size
+#     pool_size = (2, 2)  # size of pooling area for max pooling
+#     cl_dropout = 0    # conv. layer dropout
+#     dl_dropout = 0    # dense layer dropout
+#
+#     print(" CNN_LSTM: X_shape = ",X_shape,", channels = ",X_shape[3])
+#     if (X_shape[1]!=96):
+#         raise ('请调整reshape参数，默认参数适配96')
+#     input_shape = (X_shape[1], X_shape[2], X_shape[3])
+#     model = Sequential()
+#     model.add(Conv2D(nb_filters, kernel_size, padding='same', input_shape=input_shape, name="Input"))
+#     model.add(MaxPooling2D(pool_size=pool_size))
+#     model.add(Activation('relu'))        # Leave this relu & BN here.  ELU is not good here (my experience)
+#     model.add(BatchNormalization(axis=-1))  # axis=1 for 'channels_first'; but tensorflow preferse channels_last (axis=-1)
+#
+#     for layer in range(nb_layers-1):   # add more layers than just the first
+#         nb_filters = nb_filters*2
+#         model.add(Conv2D(nb_filters, kernel_size, padding='same'))
+#         model.add(MaxPooling2D(pool_size=pool_size))
+#         model.add(Activation('relu'))
+#         model.add(Dropout(cl_dropout))
+#         #model.add(BatchNormalization(axis=-1))  # ELU authors reccommend no BatchNorm. I confirm.
+#     model.add(Conv2D(nb_filters, kernel_size, padding='same'))
+#     model.add(MaxPooling2D(pool_size=(2,1)))
+#     model.add(Activation('relu'))
+#     model.add(Conv2D(nb_filters, kernel_size, padding='same'))
+#     model.add(MaxPooling2D(pool_size=(3,1)))
+#     model.add(Activation('relu'))
+#     model.add(Reshape((39,256)))
+#     model.add(LSTM(nb_filters*2))
+#     model.add(Dense(nb_filters))            # 128 is 'arbitrary' for now
+#     model.add(Activation('relu'))   # relu (no BN) works ok here, however ELU works a bit better...
+# #     model.add(Activation('elu'))
+#     model.add(Dropout(dl_dropout))
+#     model.add(Dense(nb_classes))
+#     model.add(Activation("softmax",name="Output"))
+#     return model
+def CNN_LSTM(X_shape, nb_classes, nb_layers=4):
+    # Inputs:
+    #    X_shape = [ # spectrograms per batch, # audio channels, # spectrogram freq bins, # spectrogram time bins ]
+    #    nb_classes = number of output n_classes
+    #    nb_layers = number of conv-pooling sets in the CNN
+    from keras import backend as K
+    K.set_image_data_format('channels_last')                   # SHH changed on 3/1/2018 b/c tensorflow prefers channels_last
+
+    nb_filters = 32  # number of convolutional filters = "feature maps"
+    kernel_size = (3, 3)  # convolution kernel size
+    pool_size = (2, 2)  # size of pooling area for max pooling
+    cl_dropout = 0    # conv. layer dropout
+    dl_dropout = 0    # dense layer dropout
+
+    print(" CNN_LSTM: X_shape = ",X_shape,", channels = ",X_shape[3])
+    if (X_shape[1]!=96):
+        raise ('请调整reshape参数，默认参数适配96')
+    input_shape = (X_shape[1], X_shape[2], X_shape[3])
+    model = Sequential()
+    model.add(Conv2D(nb_filters, kernel_size, padding='same', input_shape=input_shape, name="Input"))
+    model.add(MaxPooling2D(pool_size=pool_size))
+    model.add(Activation('relu'))        # Leave this relu & BN here.  ELU is not good here (my experience)
+    model.add(BatchNormalization(axis=-1))  # axis=1 for 'channels_first'; but tensorflow preferse channels_last (axis=-1)
+
+    for layer in range(nb_layers-1):   # add more layers than just the first
+        nb_filters = nb_filters*2
+        model.add(Conv2D(nb_filters, kernel_size, padding='same'))
+        model.add(MaxPooling2D(pool_size=pool_size))
+        model.add(Activation('relu'))
+        model.add(Dropout(cl_dropout))
+        #model.add(BatchNormalization(axis=-1))  # ELU authors reccommend no BatchNorm. I confirm.
+    model.add(Permute((2,1,3)))
+    model.add(Reshape((39,1536)))
+    model.add(LSTM(256))
+    #model.add(Dense(nb_filters))            # 128 is 'arbitrary' for now
+#     model.add(Activation('relu'))   # relu (no BN) works ok here, however ELU works a bit better...
+# #     model.add(Activation('elu'))
+#     model.add(Dropout(dl_dropout))
+    model.add(Dense(nb_classes))
+    model.add(Activation("softmax",name="Output"))
+    return model
 
 def old_model(X_shape, nb_classes, nb_layers=4):  # original model used in reproducing Stein et al
     from keras import backend as K

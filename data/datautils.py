@@ -234,7 +234,7 @@ def build_dataset(path="Preproc/Train/", load_frac=1.0, batch_size=None, tile=Fa
 
     if max_per_class > 0:
         total_load = min( total_load, max_per_class * nb_classes)
-
+    print("maxpercalss:",max_per_class)
     if (batch_size is not None):   # keras gets particular: dataset size must be mult. of batch_size 计算一共使用多少文件参与训练，batch_size整数倍
         total_load = nearest_multiple( total_load, batch_size)
 
@@ -300,7 +300,9 @@ def build_dataset(path="Preproc/Train/", load_frac=1.0, batch_size=None, tile=Fa
 
     print("")
     if ( load_count != total_load ):  # check to make sure we loaded everything we thought we would
-        raise Exception("Loaded "+str(load_count)+" files but was expecting "+str(total_load) )
+        X = X[:load_count]
+        Y = Y[:load_count]
+        #raise Exception("Loaded "+str(load_count)+" files but was expecting "+str(total_load) )
 
     X, Y, paths = shuffle_XY_paths(X,Y,paths)  # mix up classes, & files within classes
 

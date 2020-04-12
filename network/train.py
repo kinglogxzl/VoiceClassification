@@ -102,8 +102,8 @@ if __name__ == '__main__':
     parser.add_argument('-w', '--weights', #nargs=1, type=argparse.FileType('r'),
         help='weights file (in .hdf5)', default="weights.hdf5")
     parser.add_argument('-c', '--classpath', #type=argparse.string,
-        help='Train dataset directory with list of classes', default="/data/voice/logmeled/Train/")
-    parser.add_argument('--epochs', default=1, type=int, help="Number of iterations to train for")
+        help='Train dataset directory with list of classes', default="/data/voice/logmeled64/Train/")
+    parser.add_argument('--epochs', default=100, type=int, help="Number of iterations to train for")
     parser.add_argument('--batch_size', default=40, type=int, help="Number of clips to send to GPU at once")
     parser.add_argument('--val', default=0.2, type=float, help="Fraction of train to split off for validation")
     parser.add_argument("--tile", help="tile mono spectrograms 3 times for use with imagenet models",action="store_true")
