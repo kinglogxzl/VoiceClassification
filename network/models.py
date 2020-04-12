@@ -54,6 +54,7 @@ def MyCNN_Keras2(X_shape, nb_classes, nb_layers=4):
         model.add(Dropout(cl_dropout))
         #model.add(BatchNormalization(axis=-1))  # ELU authors reccommend no BatchNorm. I confirm.
 
+    model.add(Permute((2, 1, 3)))
     model.add(Reshape((39, -1)))
     model.add(LSTM(50, return_sequences=True,dropout=0.3,recurrent_dropout=0.3))
     model.add(Flatten())
@@ -357,7 +358,7 @@ def setup_model(X, class_names, nb_layers=4, try_checkpoint=True,
         print("Summary of serial model (duplicated across",gpu_count,"GPUs):")
         serial_model.summary()  # print out the model layers
 
-    # print model
+    # print modelv
     plot_model(serial_model, to_file='model.png', show_shapes=True
     )
     return model, serial_model   # fchollet says to hang on to the serial model for checkpointing
