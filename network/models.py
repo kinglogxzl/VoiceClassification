@@ -23,7 +23,7 @@ import h5py
 
 # This is a VGG-style network that I made by 'dumbing down' @keunwoochoi's compact_cnn code
 # I have not attempted much optimization, however it *is* fairly understandable
-def MyCNN_Keras2(X_shape, nb_classes, nb_layers=4):
+def MyCNN_Keras2(X_shape, nb_classes, nb_layers=4, reshape_x=39):
     # Inputs:
     #    X_shape = [ # spectrograms per batch, # audio channels, # spectrogram freq bins, # spectrogram time bins ]
     #    nb_classes = number of output n_classes
@@ -55,7 +55,8 @@ def MyCNN_Keras2(X_shape, nb_classes, nb_layers=4):
         #model.add(BatchNormalization(axis=-1))  # ELU authors reccommend no BatchNorm. I confirm.
 
     model.add(Permute((2, 1, 3)))
-    model.add(Reshape((39, -1)))
+    model.add(Reshape((reshape_x, -1)))
+    #model.add(Reshape((39, -1)))
     model.add(LSTM(50, return_sequences=True,dropout=0.3,recurrent_dropout=0.3))
     model.add(Flatten())
     model.add(Dense(256))            # 128 is 'arbitrary' for now
@@ -189,39 +190,39 @@ def old_model(X_shape, nb_classes, nb_layers=4):  # original model used in repro
 
 # Note: haven't gotten imagenet models to work...pretty much at all, they get stuck around 50% accuracy.
 # Routine for other image classifier models   TODO: Training gets stuck at very high losses. Not sure why
-def imageModels(X, nb_classes, weights=None):
-    # Note these all require exactly 3 input channels.
-    from keras.applications import Xception, VGG16
-    from keras.applications.inception_v3 import InceptionV3
-    from keras.applications.nasnet import NASNetLarge, NASNetMobile
-    from keras.applications.inception_resnet_v2 import InceptionResNetV2
-    from keras.utils.generic_utils import CustomObjectScope
-    from keras.applications.mobilenet import MobileNet, DepthwiseConv2D
-
-    weights = 'imagenet'    # Could resize images to, e.g. 224 x 224 and then use weights='imagenet'.
-                            # Need to use --mels=224 --dur=2.6s with preprocess_data.py   and --tile with train_network.
-
-    input_shape = X.shape[1:]
-    print("input_shape = ",input_shape)
-    if False and (3 != input_shape[0]):   # then we're going to add a front end that gives us 3 channels
-        front_end = Input(shape=input_shape)
-        front_end = Conv2D(3, (3,3), padding='valid', input_shape=input_shape, activation='relu')(front_end)
-        input_shape = (X.shape[1], X.shape[2], 3)    # and now we'll set input_shape as the rest of the network wants
-    else:
-        front_end = Input(shape=input_shape)
-    #base_model = NASNetMobile(input_shape=input_shape, weights=weights, include_top=False, input_tensor=front_end)
-    with CustomObjectScope({'relu6': keras.applications.mobilenet.relu6, 'DepthwiseConv2D': keras.applications.mobilenet.DepthwiseConv2D}):
-        base_model = MobileNet(input_shape=input_shape, weights=weights, include_top=False, input_tensor=front_end, dropout=0.6)
-    #base_model = Xception(input_shape=X[0].shape, weights=weights, include_top=False, input_tensor=front_end)
-
-    top_model = Sequential()        # top_model gets tacked on to pretrained model
-    top_model.add(Flatten(input_shape=base_model.output_shape[1:]))
-    top_model.add(Dense(128))            # 128 is 'arbitrary' for now
-    top_model.add(Dense(nb_classes,name='FinalOutput'))      # Final output layer
-
-    #top_model.load_weights('bootlneck_fc_model.h5')
-    model = Model(inputs= base_model.input, outputs= top_model(base_model.output))
-    return model
+# def imageModels(X, nb_classes, weights=None):
+#     # Note these all require exactly 3 input channels.
+#     from keras.applications import Xception, VGG16
+#     from keras.applications.inception_v3 import InceptionV3
+#     from keras.applications.nasnet import NASNetLarge, NASNetMobile
+#     from keras.applications.inception_resnet_v2 import InceptionResNetV2
+#     from keras.utils.generic_utils import CustomObjectScope
+#     from keras.applications.mobilenet import MobileNet, DepthwiseConv2D
+#
+#     weights = 'imagenet'    # Could resize images to, e.g. 224 x 224 and then use weights='imagenet'.
+#                             # Need to use --mels=224 --dur=2.6s with preprocess_data.py   and --tile with train_network.
+#
+#     input_shape = X.shape[1:]
+#     print("input_shape = ",input_shape)
+#     if False and (3 != input_shape[0]):   # then we're going to add a front end that gives us 3 channels
+#         front_end = Input(shape=input_shape)
+#         front_end = Conv2D(3, (3,3), padding='valid', input_shape=input_shape, activation='relu')(front_end)
+#         input_shape = (X.shape[1], X.shape[2], 3)    # and now we'll set input_shape as the rest of the network wants
+#     else:
+#         front_end = Input(shape=input_shape)
+#     #base_model = NASNetMobile(input_shape=input_shape, weights=weights, include_top=False, input_tensor=front_end)
+#     with CustomObjectScope({'relu6': keras.applications.mobilenet.relu6, 'DepthwiseConv2D': keras.applications.mobilenet.DepthwiseConv2D}):
+#         base_model = MobileNet(input_shape=input_shape, weights=weights, include_top=False, input_tensor=front_end, dropout=0.6)
+#     #base_model = Xception(input_shape=X[0].shape, weights=weights, include_top=False, input_tensor=front_end)
+#
+#     top_model = Sequential()        # top_model gets tacked on to pretrained model
+#     top_model.add(Flatten(input_shape=base_model.output_shape[1:]))
+#     top_model.add(Dense(128))            # 128 is 'arbitrary' for now
+#     top_model.add(Dense(nb_classes,name='FinalOutput'))      # Final output layer
+#
+#     #top_model.load_weights('bootlneck_fc_model.h5')
+#     model = Model(inputs= base_model.input, outputs= top_model(base_model.output))
+#     return model
 
 
 # Used for when you want to use weights from a previously-trained model,
@@ -291,7 +292,7 @@ def freeze_layers(model, train_last=3):
 
 # This is the main routine for setting up a model
 def setup_model(X, class_names, nb_layers=4, try_checkpoint=True,
-    weights_file='weights.hdf5', quiet=False, missing_weights_fatal=False, multi_tag=False):
+    weights_file='weights.hdf5', quiet=False, missing_weights_fatal=False, multi_tag=False,reshape_x=39):
     '''
         设置自己网络模型，使用多GPU模式
     :param X: 只使用X的shape
@@ -312,7 +313,7 @@ def setup_model(X, class_names, nb_layers=4, try_checkpoint=True,
     '''
 
     # Here's where one might 'swap out' different neural network 'model' choices
-    serial_model = MyCNN_Keras2(X.shape, nb_classes=len(class_names), nb_layers=nb_layers)
+    serial_model = MyCNN_Keras2(X.shape, nb_classes=len(class_names), nb_layers=nb_layers,reshape_x=reshape_x)
     #serial_model = old_model(X.shape, nb_classes=len(class_names), nb_layers=nb_layers)
     #serial_model = imageModels(X, nb_classes=len(class_names))
 
@@ -334,7 +335,9 @@ def setup_model(X, class_names, nb_layers=4, try_checkpoint=True,
                 print('No weights file detected, so starting from scratch.')
 
 
-    opt = 'adadelta' # Adam(lr = 0.00001)  # So far, adadelta seems to work the best of things I've tried
+    opt = 'adadelta'
+    #keras.optimizers.Adadelta(lr=1.0, rho=0.95, epsilon=1e-06)
+    # Adam(lr = 0.00001)  # So far, adadelta seems to work the best of things I've tried
     #opt = 'adam'
     metrics = ['accuracy']
 

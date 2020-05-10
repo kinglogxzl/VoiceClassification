@@ -47,7 +47,8 @@ def convert_one_file(printevery, class_index, class_files, nb_classes, classname
         already_split, nosplit, n_train, outpath, subdir, max_shape, clean, out_format, mels, phase, file_index):
     infilename = class_files[file_index]
     audio_path = dirname + '/' + infilename
-
+    # if not audio_path[-3:] == 'wav':
+    #     return
     if (0 == file_index % printevery) or (file_index+1 == len(class_files)):
         print("\r Processing class ",class_index+1,"/",nb_classes,": \'",classname,
             "\', File ",file_index+1,"/", n_load,": ",audio_path,"                             ",
@@ -130,8 +131,10 @@ def preprocess_dataset(inpath="Samples/", outpath="Preproc/", train_percentage=0
     if not os.path.exists(outpath):
         os.mkdir( outpath )  # make a new directory for preproc'd files
     if not nosplit:
-        os.mkdir( train_outpath )
-        os.mkdir( test_outpath )
+        if not os.path.exists(train_outpath):
+            os.mkdir( train_outpath )
+        if not os.path.exists(test_outpath):
+            os.mkdir( test_outpath )
     else:
         train_outpath = outpath
         test_outpath = outpath
@@ -213,6 +216,6 @@ if __name__ == '__main__':
     #     print("  See https://github.com/numpy/numpy/issues/5752 for more on this.")
     #     print("")
     inpath = '/data/voice/processed/' #'/Users/kinglog/Documents/learn/computer/研究生/融港语音识别/labled/data/'
-    outpath = '/data/voice/logmeled64/' #'/Users/kinglog/Documents/learn/computer/研究生/融港语音识别/labled/prepro/'
+    outpath = '/data/voice/logmeled64-0507/' #'/Users/kinglog/Documents/learn/computer/研究生/融港语音识别/labled/prepro/'
     preprocess_dataset(inpath=inpath, outpath=outpath,resample=16000,mels=64)
     # preprocess_dataset(inpath=args.inpath+'/', outpath=args.outpath+'/', resample=args.resample, already_split=args.already, sequential=args.sequential, mono=args.mono, nosplit=args.nosplit, dur=args.dur, clean=args.clean, out_format=args.format, mels=args.mels, phase=args.phase)

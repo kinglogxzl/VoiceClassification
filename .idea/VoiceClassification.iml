@@ -6,13 +6,10 @@
       <sourceFolder url="file://$MODULE_DIR$/network" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$" isTestSource="false" />
     </content>
-    <orderEntry type="jdk" jdkName="Remote Python 3.6.8 (sftp://zlxu@10.141.221.114:22/home/zlxu/anaconda3/envs/tf/bin/python)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="TF" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PyDocumentationSettings">
     <option name="renderExternalDocumentation" value="true" />
-  </component>
-  <component name="TestRunnerService">
-    <option name="PROJECT_TEST_RUNNER" value="Unittests" />
   </component>
 </module>
