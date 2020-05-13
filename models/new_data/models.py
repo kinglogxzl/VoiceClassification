@@ -86,4 +86,7 @@ def MyCNN_Keras2(X_shape, nb_classes, nb_layers=4, reshape_x=39, drop_out_arg=[]
  [0.4, 0.4, 0.3, 0.3, 0.01]],epochs均为100
 3.train_loss降低而val_loss不降低时，不使用验证集(--val=0)，用[0.4, 0.4, 0.3, 0.3, 0.01]来训练
 4.test_acc再次难以提升后，用[0, 0, 0, 0, 0]训练train_acc到90+（大约8个epoch）
+5.得到需要关注的类别后，增加相应类别的计算loss的权重
+6.从第3步之后得到的参数开始，（不用验证集）用[0.2, 0.2, 0.1, 0.1, 0]训练到过拟合。
+
 '''
