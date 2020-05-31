@@ -35,8 +35,8 @@ def MyCNN_Keras2(X_shape, nb_classes, nb_layers=4, reshape_x=39):
     # nb_filters2 = 16
     kernel_size = (3, 3)  # convolution kernel size
     pool_size = (2, 2)  # size of pooling area for max pooling
-    cl_dropout = 0.4    # conv. layer dropout
-    dl_dropout = 0.4   # dense layer dropout
+    cl_dropout = 0    # conv. layer dropout
+    dl_dropout = 0  # dense layer dropout
 
     print("MyCNN_Keras2: X_shape = ",X_shape,", channels = ",X_shape[3])
     input_shape = (X_shape[1], X_shape[2], X_shape[3])
@@ -57,7 +57,7 @@ def MyCNN_Keras2(X_shape, nb_classes, nb_layers=4, reshape_x=39):
     model.add(Permute((2, 1, 3)))
     model.add(Reshape((reshape_x, -1)))
     #model.add(Reshape((39, -1)))
-    model.add(LSTM(50, return_sequences=True,dropout=0.3,recurrent_dropout=0.3))
+    model.add(LSTM(50, return_sequences=True,dropout=0.4,recurrent_dropout=0.4))
     model.add(Flatten())
     model.add(Dense(256))            # 128 is 'arbitrary' for now
     #model.add(Activation('relu'))   # relu (no BN) works ok here, however ELU works a bit better...
@@ -359,7 +359,7 @@ def setup_model(X, class_names, nb_layers=4, try_checkpoint=True,
 
     if (not quiet):
         print("Summary of serial model (duplicated across",gpu_count,"GPUs):")
-        serial_model.summary()  # print out the model layers
+    serial_model.summary()  # print out the model layers
 
     # print modelv
     plot_model(serial_model, to_file='model.png', show_shapes=True

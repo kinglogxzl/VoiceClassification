@@ -12,7 +12,7 @@ import glob
 from skimage import img_as_ubyte
 from random import shuffle
 import re,shutil
-import tqdm
+from tqdm import tqdm
 
 def listdir_nohidden(path,subdirs_only=False, skip_csv=True):
     '''
@@ -320,7 +320,7 @@ def process_line(line):
 
 def label_process(file='../label/label0507.txt', data_path='/data/voice/processed/',source_path = '/data/voice/origin/'):
     f = open(file).readlines()
-    for line in f:
+    for line in tqdm(f):
         lst = process_line(line)
         if (len(lst) == 3):  # 有效数据
             target_path = data_path + lst[2]
@@ -329,4 +329,4 @@ def label_process(file='../label/label0507.txt', data_path='/data/voice/processe
             file_name = lst[0].split('/')[-1]
             shutil.copyfile(source_path + lst[0], os.path.join(target_path, file_name))
 
-# label_process(file='/home/zlxu/work/VoiceClassification/data/label/label0507.txt', data_path='/data/voice/processed/',source_path = '/data/voice/origin/')
+#label_process(file='/home/zlxu/work/VoiceClassification/data/label/label0529.txt', data_path='/data/voice/processed/',source_path = '/data/voice/origin/')

@@ -15,6 +15,7 @@ from timeit import default_timer as timer
 from network.muti_gpu import MultiGPUModelCheckpoint
 from network.mixup_generator import MixupGenerator
 from network.models import  *
+from keras.callbacks import TensorBoard
 import math
 
 
@@ -26,7 +27,8 @@ def train_network(weights_file="weights.hdf5", classpath="Preproc/Train/",
     # Get the data
     X_train, Y_train, paths_train, class_names = build_dataset(path=classpath,
         batch_size=batch_size, tile=tile, max_per_class=max_per_class)
-
+    X_test, Y_test, paths_test, class_names_test = build_dataset(path=classpath + "../Test/", batch_size=batch_size,tile=tile)
+    print ("============================LOAD DATASET============================")
     if classpath=="/data/voice/logmeled/Train/":
         reshape_x = 39
     elif classpath=="/data/voice/logmeled64-0507/Train/":
@@ -48,18 +50,18 @@ def train_network(weights_file="weights.hdf5", classpath="Preproc/Train/",
             training_generator = MixupGenerator(X_train, Y_train, batch_size=batch_size, alpha=0.25)()
             model.fit_generator(generator=training_generator, steps_per_epoch=steps_per_epoch,
                   epochs=epochs, shuffle=True,
-                  verbose=1, callbacks=[checkpointer], validation_data=(X_val, Y_val))
+                  verbose=1, callbacks=[checkpointer,TensorBoard(log_dir='./log')], validation_data=(X_test, Y_test))
         else:
             model.fit(X_train, Y_train, batch_size=batch_size, epochs=epochs, shuffle=True,
-                  verbose=1, callbacks=[checkpointer], #validation_split=val_split)
-                  validation_data=(X_val, Y_val))
-
+                  verbose=1, callbacks=[checkpointer,TensorBoard(log_dir='./log')], #validation_split=val_split)
+                  validation_data=(X_test, Y_test))
+            model.save('weights-last.hdf5')
     # overwrite text file class_names.txt  - does not put a newline after last class name
     with open('class_names.txt', 'w') as outfile:
         outfile.write("\n".join(class_names))
 
     # Score the model against Test dataset
-    X_test, Y_test, paths_test, class_names_test  = build_dataset(path=classpath+"../Test/", tile=tile)
+    X_test, Y_test, paths_test, class_names_test = build_dataset(path=classpath + "../Test/",tile=tile)
     assert( class_names == class_names_test )
     # score = model.evaluate(X_test, Y_test, verbose=0)
     # print('Test loss:', score[0])
@@ -104,12 +106,12 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description="trains network using training dataset")
     parser.add_argument('-w', '--weights', #nargs=1, type=argparse.FileType('r'),
-        help='weights file (in .hdf5)', default="olddata_weights.hdf5")
+        help='weights file (in .hdf5)', default="weights0529.hdf5")
     parser.add_argument('-c', '--classpath', #type=argparse.string,
-        help='Train dataset directory with list of classes', default="/data/voice/logmeled/Train/")
-    parser.add_argument('--epochs', default=10, type=int, help="Number of iterations to train for")
+        help='Train dataset directory with list of classes', default="/data/voice/logmeled64-0507/Train/")
+    parser.add_argument('--epochs', default=90, type=int, help="Number of iterations to train for")
     parser.add_argument('--batch_size', default=40, type=int, help="Number of clips to send to GPU at once")
-    parser.add_argument('--val', default=0.2, type=float, help="Fraction of train to split off for validation")
+    parser.add_argument('--val', default=0, type=float, help="Fraction of train to split off for validation")
     parser.add_argument("--tile", help="tile mono spectrograms 3 times for use with imagenet models",action="store_true")
     parser.add_argument("--test", help="only test", action="store_true")
     parser.add_argument('-m', '--maxper', type=int, default=0, help="Max examples per class")
