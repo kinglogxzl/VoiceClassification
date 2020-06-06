@@ -9,7 +9,7 @@ def process_line(line):
         result.append(item)
     return result
 # #%%
-# file='/Users/kinglog/Documents/learn/computer/研究生/融港语音识别/VoiceClassification/data/label/(个人银行标签)label.txt'
+# file='/Users/kinglog/Documents/learn/computer/研究生/融港语音识别/VoiceClassification/data/label/(geren)label.txt'
 # data_path='../../labeled/data/'
 # source_path = '/Users/kinglog/Documents/learn/computer/研究生/融港语音识别/labled/jsnx20191111/'
 # txt_cont = []
@@ -40,7 +40,7 @@ txt_cont = []
 valid = 0
 pre_path = '/home/zlxu/work/VoiceClassification/data/label/' #'/Users/kinglog/Documents/learn/computer/研究生/融港语音识别/VoiceClassification/data/label/'
 label_file = os.listdir(pre_path)
-pre_dict = {"(个人银行标签)label.txt":"jsnx20191111","最新标注.txt":"jsnx20191121-20200109","test.txt":"jsnx20191121-20200109","综合.txt":"jsnx20191121-20200109"}
+pre_dict = {"(geren)label.txt":"jsnx20191111","zuixin.txt":"jsnx20191121-20200109","test.txt":"jsnx20191121-20200109","zonghe.txt":"jsnx20191121-20200109"}
 for file in label_file:
     if (not file in pre_dict.keys()):
         continue
@@ -51,7 +51,7 @@ for file in label_file:
         lst = process_line(line)
         if (len(lst) == 3):  # 有效数据
             valid += 1
-            if (not file == "(个人银行标签)label.txt"):
+            if (not file == "(geren)label.txt"):
                 lst[0] = pre_dict[file] + '/' + lst[0][:8] + '/' + lst[0]
             else:
                 lst[0] = pre_dict[file] + '/' + lst[0]

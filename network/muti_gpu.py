@@ -6,7 +6,17 @@ from keras.callbacks import Callback, ModelCheckpoint
 import tensorflow as tf
 from tensorflow.python.client import device_lib
 import numpy as np
-import models
+import sys
+# from models import save_model_ext
+from keras.models import save_model
+import h5py
+
+def save_model_ext(model, filepath, overwrite=True, class_names=None):
+    save_model(model, filepath, overwrite)
+    if class_names is not None:
+        f = h5py.File(filepath, mode='a')
+        f.attrs['class_names'] = np.array(class_names, dtype='S')  # have to encode it somehow
+        f.close()
 
 def make_serial(model, parallel=True):   # Undoes make_parallel, but keyword included in case it's called on a serial model
     if (parallel):
@@ -119,7 +129,7 @@ class MultiGPUModelCheckpoint(Callback):
                             self.serial_model.save_weights(filepath, overwrite=True)
                         else:
                             #self.serial_model.save(filepath, overwrite=True)
-                            models.save_model_ext(self.serial_model, filepath, overwrite=True, class_names=self.class_names)
+                            save_model_ext(self.serial_model, filepath, overwrite=True, class_names=self.class_names)
 
                     else:
                         if self.verbose > 0:
@@ -132,4 +142,4 @@ class MultiGPUModelCheckpoint(Callback):
                     self.serial_model.save_weights(filepath, overwrite=True)
                 else:
                     #self.serial_model.save(filepath, overwrite=True)
-                    models.save_model_ext(self.serial_model, filepath, overwrite=True, class_names=self.class_names)
+                    save_model_ext(self.serial_model, filepath, overwrite=True, class_names=self.class_names)
