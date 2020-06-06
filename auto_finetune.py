@@ -15,7 +15,7 @@ from network.train import train_network
 PREPARE_DATA = False  # 是否有新数据需要预处理
 
 if __name__ == '__main__':
-    mark = 'test'  # 标记不同时期的数据
+    mark = '0609'  # 标记不同时期的数据
     # key中文件存放wav文件名和具体类别，value表示wav文件的所在文件夹
     pre_dict = {"(geren)label.txt": "jsnx20191111", "zuixin.txt": "jsnx20191121-20200109",
                 "test.txt": "jsnx20191121-20200109", "zonghe.txt": "jsnx20191121-20200109"}
@@ -32,7 +32,7 @@ if __name__ == '__main__':
     data_path = '/data/voice/processed_' + mark + '/'
 
     # 新建数据集所在位置
-    outpath = '/data/voice/logmeled64_' + mark + '/'
+    outpath = '/data/voice/logmeled64-' + mark + '/'
     if PREPARE_DATA:
         # 准备新数据
         # 1.计算label分布
@@ -49,25 +49,31 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = '4'
 
     weight_save_path = "./weights/"
-    weights = weight_save_path + "newdata_weights.hdf5"
+    weight_name = "newdata_weights.hdf5"
+    weights = weight_save_path + weight_name
     classpath = outpath + "Train/"
-    epochs = 50
+    epochs = 100
     batch_size = 40
-    val = 0
+    val = 0.1
     tile = False
     test = False
     maxper = 0
-    reshape_x = 52
+    reshape_x = 110
 
-    drop_out_args = [[0, 0, 0, 0, 0], [0., 0., 0., 0., 0], [0.2, 0.2, 0.1, 0.1, 0.0], [0.2, 0.2, 0.1, 0.1, 0.0]]
+    drop_out_args = [[0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 0],
+                     [0.1, 0.1, 0.05, 0.05, 0],
+                     [0.2, 0.2, 0.1, 0.1, 0],
+                     [0.4, 0.4, 0.3, 0.3, 0.0],
+                     [0.4, 0.4, 0.3, 0.3, 0.01]]
     index = 0
     for drop_out_arg in drop_out_args:
         train_network(weights_file=weights, classpath=classpath, epochs=epochs,
                       batch_size=batch_size,
-                      val_split=val, tile=tile, max_per_class=maxper, only_test=test,
+                      val_split=val, tile=tile, max_per_class=maxper, only_test=test, reshape_x=reshape_x,
                       drop_out_arg=drop_out_arg)
         for filename in os.listdir(weight_save_path):  # 用os.walk方法取得path路径下的文件夹路径，子文件夹名，所有文件名
-            if filename == weights:
+            if filename == weight_name:
                 index = index + 1
                 new_name = filename.replace('.hdf5', '_' + str(index) + '.hdf5')  # 为文件赋予新名字
                 shutil.copyfile(os.path.join(weight_save_path, filename),
