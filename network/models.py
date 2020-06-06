@@ -19,7 +19,7 @@ import sys
 from network.muti_gpu import *
 from tensorflow.python.client import device_lib
 # from muti_gpu import get_available_gpus, make_parallel
-from network.muti_gpu import get_available_gpus, make_parallel
+from muti_gpu import get_available_gpus, make_parallel
 
 import h5py
 
