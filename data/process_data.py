@@ -60,6 +60,9 @@ def convert_one_file(printevery, class_index, class_files, nb_classes, classname
 
     # Reshape / pad so all output files have same shape
     shape = get_canonical_shape(signal)     # either the signal shape or a leading one
+    # print(shape)
+    if(shape[1]>432449):
+        return
     if (shape != signal.shape):             # this only evals to true for mono
         signal = np.reshape(signal, shape)
         #print("...reshaped mono so new shape = ",signal.shape, end="")
@@ -114,7 +117,8 @@ def preprocess_dataset(inpath="Samples/", outpath="Preproc/", train_percentage=0
         print(" Shuffling ordering",flush=True)
 
     print(" Finding max shape...",flush=True)
-    max_shape = find_max_shape(inpath, mono=mono, sr=resample, dur=dur, clean=clean)
+    # max_shape = find_max_shape(inpath, mono=mono, sr=resample, dur=dur, clean=clean)
+    max_shape = (1, 432449)
     print(''' Padding all files with silence to fit shape:
               Channels : {}
               Samples  : {}
