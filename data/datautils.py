@@ -330,4 +330,6 @@ def label_process(file='../label/label0507.txt', data_path='/data/voice/processe
             shutil.copyfile(source_path + lst[0], os.path.join(target_path, file_name))
 
 
+#label_process(file='/home/zlxu/work/VoiceClassification/data/label/label0620.txt', data_path='/data/voice/processed/',source_path = '/data/voice/origin/')
+
 #label_process(file='/home/zlxu/work/VoiceClassification/data/label/label0606.txt', data_path='/data/voice/processed/',source_path = '/data/voice/origin/')
