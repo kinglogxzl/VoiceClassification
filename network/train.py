@@ -20,7 +20,7 @@ import math
 
 
 def train_network(weights_file="weights.hdf5", classpath="Preproc/Train/",
-    epochs=50, batch_size=20, val_split=0.2, tile=False, max_per_class=0, only_test=False):
+    epochs=50, batch_size=20, val_split=0.2, tile=False, max_per_class=0, only_test=False, tb_log='log'):
 
     np.random.seed(1)  # 初始化随机种子
 
@@ -35,8 +35,13 @@ def train_network(weights_file="weights.hdf5", classpath="Preproc/Train/",
         reshape_x = 52
     # Instantiate the model
     model, serial_model = setup_model(X_train, class_names, weights_file=weights_file,reshape_x=reshape_x)
+    if os.path.exists(tb_log):
+        files = glob.glob(os.path.join(tb_log, '*.ubuntu-sever'))
+        for f in files:
+            os.remove(f)
+        #os.removedirs('./log')
     if not only_test:
-        save_best_only = (val_split > 1e-6)
+        save_best_only = True
 
         split_index = int(X_train.shape[0]*(1-val_split))
         X_val, Y_val = X_train[split_index:], Y_train[split_index:]
@@ -50,10 +55,10 @@ def train_network(weights_file="weights.hdf5", classpath="Preproc/Train/",
             training_generator = MixupGenerator(X_train, Y_train, batch_size=batch_size, alpha=0.25)()
             model.fit_generator(generator=training_generator, steps_per_epoch=steps_per_epoch,
                   epochs=epochs, shuffle=True,
-                  verbose=1, callbacks=[checkpointer,TensorBoard(log_dir='./log')], validation_data=(X_test, Y_test))
+                  verbose=1, callbacks=[checkpointer,TensorBoard(log_dir=tb_log)], validation_data=(X_test, Y_test))
         else:
             model.fit(X_train, Y_train, batch_size=batch_size, epochs=epochs, shuffle=True,
-                  verbose=1, callbacks=[checkpointer,TensorBoard(log_dir='./log')], #validation_split=val_split)
+                  verbose=1, callbacks=[checkpointer,TensorBoard(log_dir=tb_log)], #validation_split=val_split)
                   validation_data=(X_test, Y_test))
             model.save('weights-last.hdf5')
     # overwrite text file class_names.txt  - does not put a newline after last class name
@@ -115,7 +120,9 @@ if __name__ == '__main__':
     parser.add_argument("--tile", help="tile mono spectrograms 3 times for use with imagenet models",action="store_true")
     parser.add_argument("--test", help="only test", action="store_true")
     parser.add_argument('-m', '--maxper', type=int, default=0, help="Max examples per class")
+    parser.add_argument('--gpu', default=1, type=int, help="GPU used")
+    parser.add_argument('--tb_log', default='log', type=str, help="GPU used")
     args = parser.parse_args()
-    os.environ['CUDA_VISIBLE_DEVICES'] = '4'
+    os.environ['CUDA_VISIBLE_DEVICES'] = str(args.gpu)
     train_network(weights_file=args.weights, classpath=args.classpath, epochs=args.epochs, batch_size=args.batch_size,
-        val_split=args.val, tile=args.tile, max_per_class=args.maxper, only_test=args.test)
+        val_split=args.val, tile=args.tile, max_per_class=args.maxper, only_test=args.test, tb_log=args.tb_log)

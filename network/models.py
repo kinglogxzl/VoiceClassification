@@ -35,20 +35,20 @@ def MyCNN_Keras2(X_shape, nb_classes, nb_layers=4, reshape_x=39):
     # nb_filters2 = 16
     kernel_size = (3, 3)  # convolution kernel size
     pool_size = (2, 2)  # size of pooling area for max pooling
-    cl_dropout = 0    # conv. layer dropout
+    cl_dropout = 0  # conv. layer dropout
     dl_dropout = 0  # dense layer dropout
-
+    l2_weight = 0
     print("MyCNN_Keras2: X_shape = ",X_shape,", channels = ",X_shape[3])
     input_shape = (X_shape[1], X_shape[2], X_shape[3])
     model = Sequential()
-    model.add(Conv2D(nb_filters, kernel_size, W_regularizer=l2(0.01), input_shape=input_shape,padding='same', name="Input"))
+    model.add(Conv2D(nb_filters, kernel_size, W_regularizer=l2(l2_weight), input_shape=input_shape,padding='same', name="Input"))
     model.add(MaxPooling2D(pool_size=pool_size))
     model.add(Activation('relu'))        # Leave this relu & BN here.  ELU is not good here (my experience)
     # model.add(BatchNormalization(axis=-1))  # axis=1 for 'channels_first'; but tensorflow preferse channels_last (axis=-1)
 
     for layer in range(nb_layers-1):   # add more layers than just the first
         nb_filters = nb_filters*2
-        model.add(Conv2D(nb_filters, kernel_size,W_regularizer=l2(0.01), padding='same'))
+        model.add(Conv2D(nb_filters, kernel_size,W_regularizer=l2(l2_weight), padding='same'))
         model.add(MaxPooling2D(pool_size=pool_size))
         model.add(Activation('elu'))
         model.add(Dropout(cl_dropout))
@@ -57,13 +57,13 @@ def MyCNN_Keras2(X_shape, nb_classes, nb_layers=4, reshape_x=39):
     model.add(Permute((2, 1, 3)))
     model.add(Reshape((reshape_x, -1)))
     #model.add(Reshape((39, -1)))
-    model.add(LSTM(50, return_sequences=True,dropout=0.4,recurrent_dropout=0.4))
+    model.add(LSTM(50, return_sequences=True,dropout=0,recurrent_dropout=0))
     model.add(Flatten())
     model.add(Dense(256))            # 128 is 'arbitrary' for now
     #model.add(Activation('relu'))   # relu (no BN) works ok here, however ELU works a bit better...
     model.add(Activation('elu'))
     model.add(Dropout(dl_dropout))
-    model.add(Dense(nb_classes,W_regularizer=l2(0.01)))
+    model.add(Dense(nb_classes,W_regularizer=l2(l2_weight)))
     model.add(Activation("softmax",name="Output"))
     return model
 
