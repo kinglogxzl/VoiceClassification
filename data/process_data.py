@@ -60,6 +60,9 @@ def convert_one_file(printevery, class_index, class_files, nb_classes, classname
 
     # Reshape / pad so all output files have same shape
     shape = get_canonical_shape(signal)     # either the signal shape or a leading one
+    # print(shape)
+    if(shape[1]>432449):
+        return
     if (shape != signal.shape):             # this only evals to true for mono
         signal = np.reshape(signal, shape)
         #print("...reshaped mono so new shape = ",signal.shape, end="")
@@ -114,7 +117,8 @@ def preprocess_dataset(inpath="Samples/", outpath="Preproc/", train_percentage=0
         print(" Shuffling ordering",flush=True)
 
     print(" Finding max shape...",flush=True)
-    max_shape = find_max_shape(inpath, mono=mono, sr=resample, dur=dur, clean=clean)
+    # max_shape = find_max_shape(inpath, mono=mono, sr=resample, dur=dur, clean=clean)
+    max_shape = (1, 432449)
     print(''' Padding all files with silence to fit shape:
               Channels : {}
               Samples  : {}
@@ -133,8 +137,8 @@ def preprocess_dataset(inpath="Samples/", outpath="Preproc/", train_percentage=0
     if not nosplit:
         if not os.path.exists(train_outpath):
             os.mkdir( train_outpath )
-        if not os.path.exists(test_outpath):
-            os.mkdir( test_outpath )
+            if not os.path.exists(test_outpath):
+                os.mkdir( test_outpath )
     else:
         train_outpath = outpath
         test_outpath = outpath
@@ -158,8 +162,9 @@ def preprocess_dataset(inpath="Samples/", outpath="Preproc/", train_percentage=0
             if not os.path.exists(train_outpath+classname):
                 print("Making directory ",train_outpath+classname)
                 os.mkdir( train_outpath+classname );
-                if not os.path.exists(test_outpath+classname):
-                    os.mkdir( test_outpath+classname );
+                # mark
+            if not os.path.exists(test_outpath+classname):
+                os.mkdir( test_outpath+classname );
             dirname = inpath+subdir+classname
             class_files = list(listdir_nohidden(dirname))   # all filenames for this class, skip hidden files
             class_files.sort()
@@ -216,6 +221,6 @@ if __name__ == '__main__':
     #     print("  See https://github.com/numpy/numpy/issues/5752 for more on this.")
     #     print("")
     inpath = '/data/voice/processed/' #'/Users/kinglog/Documents/learn/computer/研究生/融港语音识别/labled/data/'
-    outpath = '/data/voice/logmeled64-0609/' #'/Users/kinglog/Documents/learn/computer/研究生/融港语音识别/labled/prepro/'
+    outpath = '/data/voice/logmeled64-bn/' #'/Users/kinglog/Documents/learn/computer/研究生/融港语音识别/labled/prepro/'
     preprocess_dataset(inpath=inpath, outpath=outpath,resample=16000,mels=64)
     # preprocess_dataset(inpath=args.inpath+'/', outpath=args.outpath+'/', resample=args.resample, already_split=args.already, sequential=args.sequential, mono=args.mono, nosplit=args.nosplit, dur=args.dur, clean=args.clean, out_format=args.format, mels=args.mels, phase=args.phase)
