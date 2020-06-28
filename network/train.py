@@ -86,6 +86,9 @@ def train_network(weights_file="weights.hdf5", classpath="Preproc/Train/",
         if item == Y_test[i]:
             correct_class[item] += 1
             correct_sum += 1
+        else:
+            with open("./false_data.txt",'a') as f:
+                f.write("正确类别:{}\t识别类别:{}\n".format(Y_test[i], item))
     # 按照正确数量排序
     correct_class = sorted(correct_class.items(), key=lambda item: item[1], reverse=True)
     import codecs
