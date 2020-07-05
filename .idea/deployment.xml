@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="zlxu@10.141.221.114:22 password" createEmptyFolders="true">
+  <component name="PublishConfigData" autoUpload="Always" serverName="shiyanshi" createEmptyFolders="true">
     <serverData>
-      <paths name="zlxu@10.141.221.114:22 password">
+      <paths name="shiyanshi">
         <serverdata>
           <mappings>
-            <mapping deploy="/home/zlxu/work/VoiceClassification" local="$PROJECT_DIR$" />
+            <mapping deploy="work/VoiceClassification" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>

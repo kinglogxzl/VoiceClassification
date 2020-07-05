@@ -14,6 +14,13 @@
     
     运行proces_data
     
+### auto_finetune.py 使用说明
+
+    1. 将运行需要填写的参数(使用数据集的标记、文件存放路径等)填写完整
+    2. 若需要重新建立数据集，令auto_finetune.py开头的PREPARE_DATA=True
+    3. 关于训练参数与train.py中的基本一致
+       除了drop_out_args, 可以输入多组dropout和l2损失的参数值进行训练
+
 # 细节说明
 
 * mel文件特征：  96 * maxtime_length
