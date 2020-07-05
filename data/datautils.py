@@ -212,7 +212,7 @@ def nearest_multiple( a, b ):   # returns number smaller than a, which is the ne
 
 
 # can be used for test dataset as well
-def build_dataset(path="Preproc/Train/", load_frac=1.0, batch_size=None, tile=False, max_per_class=0):
+def build_dataset(path="Preproc/Train/", load_frac=1.0, batch_size=None, tile=False, max_per_class=0, white_list=[]):
     '''
 
     :param path:
@@ -267,7 +267,7 @@ def build_dataset(path="Preproc/Train/", load_frac=1.0, batch_size=None, tile=Fa
         if max_per_class > 0:
             n_load = min( n_load, max_per_class)
         printevery = 100
-
+        #TODO:由顺序取前n_load，变为随机取
         file_list = class_files[0:n_load]
 
         for idx2, infilename in enumerate(file_list):   # Load files in a particular class

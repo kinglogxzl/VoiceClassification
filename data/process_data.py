@@ -221,6 +221,6 @@ if __name__ == '__main__':
     #     print("  See https://github.com/numpy/numpy/issues/5752 for more on this.")
     #     print("")
     inpath = '/data/voice/processed/' #'/Users/kinglog/Documents/learn/computer/研究生/融港语音识别/labled/data/'
-    outpath = '/data/voice/logmeled64-bn/' #'/Users/kinglog/Documents/learn/computer/研究生/融港语音识别/labled/prepro/'
+    outpath = '/data/voice/logmeled64-0620/' #'/Users/kinglog/Documents/learn/computer/研究生/融港语音识别/labled/prepro/'
     preprocess_dataset(inpath=inpath, outpath=outpath,resample=16000,mels=64)
     # preprocess_dataset(inpath=args.inpath+'/', outpath=args.outpath+'/', resample=args.resample, already_split=args.already, sequential=args.sequential, mono=args.mono, nosplit=args.nosplit, dur=args.dur, clean=args.clean, out_format=args.format, mels=args.mels, phase=args.phase)
