@@ -114,7 +114,7 @@ def gen_echarts(data, html_path='./'):
        </body>
     </html>
     '''
-    with open(html_path+'class_distribution.html', 'w') as f:
+    with open(html_path + 'class_distribution.html', 'w') as f:
         f.write(head + str(data) + tail)
 
 
@@ -123,6 +123,7 @@ def analysis_lable(pre_dict, pre_path='/home/qjsun/work/VoiceClassification/data
     import re, shutil, os, codecs
     txt_cont = []
     label_file = os.listdir(pre_path)
+    wav_name_set = set()
     for file in label_file:
         if (not file in pre_dict.keys()):
             continue
@@ -131,13 +132,23 @@ def analysis_lable(pre_dict, pre_path='/home/qjsun/work/VoiceClassification/data
         # print(len(f))
         for line in f:
             lst = process_line(line)
-            if (len(lst) == 3):  # 有效数据
-                # valid += 1
-                if (not file == "(geren)label.txt"):
-                    lst[0] = pre_dict[file] + '/' + lst[0][:8] + '/' + lst[0]
-                else:
-                    lst[0] = pre_dict[file] + '/' + lst[0]
-                txt_cont.append(lst)
+            if (file == 'humancraft_label.txt'):
+                if (len(lst) == 2):  # 有效数据
+                    lst.append(lst[1])
+                    if(not lst[0] in wav_name_set):
+                        wav_name_set.add(lst[0])
+                        lst[0] = pre_dict[file] + '/' + lst[0]
+                        txt_cont.append(lst)
+            else:
+                if (len(lst) == 3):  # 有效数据
+                    # valid += 1
+                    if (not lst[0] in wav_name_set):
+                        wav_name_set.add(lst[0])
+                        if (not file == "(geren)label.txt"):
+                            lst[0] = pre_dict[file] + '/' + lst[0][:8] + '/' + lst[0]
+                        else:
+                            lst[0] = pre_dict[file] + '/' + lst[0]
+                        txt_cont.append(lst)
     f = codecs.open(out_label, 'w', encoding='utf-8')
     for line in txt_cont:
         cnt = ''
@@ -164,5 +175,6 @@ def analysis_lable(pre_dict, pre_path='/home/qjsun/work/VoiceClassification/data
 # 给label文件增加目录
 if __name__ == '__main__':
     pre_dict = {"(geren)label.txt": "jsnx20191111", "zuixin.txt": "jsnx20191121-20200109",
-                "test.txt": "jsnx20191121-20200109", "zonghe.txt": "jsnx20191121-20200109"}
+                "test.txt": "jsnx20191121-20200109", "zonghe.txt": "jsnx20191121-20200109",
+                'humancraft_label.txt': "humancraft_data"}
     analysis_lable(pre_dict=pre_dict, pre_path='./dir_label', out_label='./lable_test2.txt')

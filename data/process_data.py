@@ -5,7 +5,7 @@ Preprocess audio
 '''
 from __future__ import print_function
 import numpy as np
-from datautils import *
+from data.datautils import *
 import librosa
 from audioread import NoBackendError
 import os
@@ -92,7 +92,7 @@ def convert_one_file(printevery, class_index, class_files, nb_classes, classname
 
 
 
-def preprocess_dataset(inpath="Samples/", outpath="Preproc/", train_percentage=0.8, resample=None, already_split=False,
+def preprocess_dataset(inpath="Samples/", outpath="Preproc/", train_percentage=0.9, resample=None, already_split=False,
     nosplit=False, sequential=False, mono=False, dur=None, clean=False, out_format='npy', mels=96, phase=False):
 
     if (resample is not None):
@@ -107,7 +107,7 @@ def preprocess_dataset(inpath="Samples/", outpath="Preproc/", train_percentage=0
         class_names = get_class_names(path=inpath)   # get the names of the subdirectories
         sampleset_subdirs = ["./"]
     else:
-        print(" Will be imposing 80-20 (Train-Test) split",flush=True)
+        print(" Will be imposing 90-10 (Train-Test) split",flush=True)
         class_names = get_class_names(path=inpath)   # get the names of the subdirectories
         sampleset_subdirs = ["./"]
 
@@ -220,7 +220,7 @@ if __name__ == '__main__':
     #     print(" If it hangs, try running with mono only (-m) or the --clean option, or turn off parallelism")
     #     print("  See https://github.com/numpy/numpy/issues/5752 for more on this.")
     #     print("")
-    inpath = '/data/voice/processed/' #'/Users/kinglog/Documents/learn/computer/研究生/融港语音识别/labled/data/'
-    outpath = '/data/voice/logmeled64-0620/' #'/Users/kinglog/Documents/learn/computer/研究生/融港语音识别/labled/prepro/'
+    inpath = '/data/voice/processed_test/' #'/Users/kinglog/Documents/learn/computer/研究生/融港语音识别/labled/data/'
+    outpath = '/data/voice/logmeled64_test/' #'/Users/kinglog/Documents/learn/computer/研究生/融港语音识别/labled/prepro/'
     preprocess_dataset(inpath=inpath, outpath=outpath,resample=16000,mels=64)
     # preprocess_dataset(inpath=args.inpath+'/', outpath=args.outpath+'/', resample=args.resample, already_split=args.already, sequential=args.sequential, mono=args.mono, nosplit=args.nosplit, dur=args.dur, clean=args.clean, out_format=args.format, mels=args.mels, phase=args.phase)

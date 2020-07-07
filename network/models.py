@@ -45,6 +45,7 @@ def MyCNN_Keras2(X_shape, nb_classes, nb_layers=4, reshape_x=39, drop_out_arg=[]
     dl_dropout = drop_out_arg[1]  # dense layer dropout
 
     print("MyCNN_Keras2: X_shape = ", X_shape, ", channels = ", X_shape[3])
+    print("dropout_args = {}".format(drop_out_arg))
     input_shape = (X_shape[1], X_shape[2], X_shape[3])
     model = Sequential()
     model.add(
@@ -74,54 +75,11 @@ def MyCNN_Keras2(X_shape, nb_classes, nb_layers=4, reshape_x=39, drop_out_arg=[]
     model.add(Dropout(dl_dropout))
     model.add(Dense(nb_classes, W_regularizer=l2(drop_out_arg[4])))
     model.add(Activation("softmax", name="Output"))
+    # model.add(Dense(nb_classes, W_regularizer=l2(drop_out_arg[4]),name="new_dense_2"))
+    # model.add(Activation("softmax", name="new_Output"))
     return model
 
-# def MyCNN_Keras2(X_shape, nb_classes, nb_layers=4, reshape_x=39, drop_out_arg=[]):
-#     # Inputs:
-#     #    X_shape = [ # spectrograms per batch, # audio channels, # spectrogram freq bins, # spectrogram time bins ]
-#     #    nb_classes = number of output n_classes
-#     #    nb_layers = number of conv-pooling sets in the CNN
-#     from keras import backend as K
-#     K.set_image_data_format('channels_last')  # SHH changed on 3/1/2018 b/c tensorflow prefers channels_last
-#
-#     if (drop_out_arg == []):
-#         drop_out_arg = [0.4, 0.4, 0.3, 0.3, 0.01]
-#
-#     nb_filters = 32  # number of convolutional filters = "feature maps"
-#     # nb_filters2 = 16
-#     kernel_size = (3, 3)  # convolution kernel size
-#     pool_size = (2, 2)  # size of pooling area for max pooling
-#     cl_dropout = 0    # conv. layer dropout
-#     dl_dropout = 0  # dense layer dropout
-#
-#     print("MyCNN_Keras2: X_shape = ",X_shape,", channels = ",X_shape[3])
-#     input_shape = (X_shape[1], X_shape[2], X_shape[3])
-#     model = Sequential()
-#     model.add(Conv2D(nb_filters, kernel_size, W_regularizer=l2(0.01), input_shape=input_shape,padding='same', name="Input"))
-#     model.add(MaxPooling2D(pool_size=pool_size))
-#     model.add(Activation('relu'))        # Leave this relu & BN here.  ELU is not good here (my experience)
-#     # model.add(BatchNormalization(axis=-1))  # axis=1 for 'channels_first'; but tensorflow preferse channels_last (axis=-1)
-#
-#     for layer in range(nb_layers-1):   # add more layers than just the first
-#         nb_filters = nb_filters*2
-#         model.add(Conv2D(nb_filters, kernel_size,W_regularizer=l2(0.01), padding='same'))
-#         model.add(MaxPooling2D(pool_size=pool_size))
-#         model.add(Activation('elu'))
-#         model.add(Dropout(cl_dropout))
-#         #model.add(BatchNormalization(axis=-1))  # ELU authors reccommend no BatchNorm. I confirm.
-#
-#     model.add(Permute((2, 1, 3)))
-#     model.add(Reshape((reshape_x, -1)))
-#     #model.add(Reshape((39, -1)))
-#     model.add(LSTM(50, return_sequences=True,dropout=0.4,recurrent_dropout=0.4))
-#     model.add(Flatten())
-#     model.add(Dense(256))            # 128 is 'arbitrary' for now
-#     #model.add(Activation('relu'))   # relu (no BN) works ok here, however ELU works a bit better...
-#     model.add(Activation('elu'))
-#     model.add(Dropout(dl_dropout))
-#     model.add(Dense(nb_classes,W_regularizer=l2(0.01)))
-#     model.add(Activation("softmax",name="Output"))
-#     return model
+
 # def CNN_LSTM(X_shape, nb_classes, nb_layers=4):
 #     # Inputs:
 #     #    X_shape = [ # spectrograms per batch, # audio channels, # spectrogram freq bins, # spectrogram time bins ]
@@ -385,6 +343,7 @@ def setup_model(X, class_names, nb_layers=4, try_checkpoint=True,
             print('Weights file detected. Loading from ', weights_file)
             loaded_model = load_model(weights_file)  # strip any previous parallel part, to be added back in later
             serial_model.set_weights(loaded_model.get_weights())  # assign weights based on checkpoint
+            # serial_model.load_weights(weights_file, by_name=True)
         else:
             if (missing_weights_fatal):
                 print("Need weights file to continue.  Aborting")
@@ -392,7 +351,8 @@ def setup_model(X, class_names, nb_layers=4, try_checkpoint=True,
             else:
                 print('No weights file detected, so starting from scratch.')
 
-    opt = 'adadelta'
+    # opt = 'adadelta'
+    opt = keras.optimizers.Adam(lr=5e-5, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
     # keras.optimizers.Adadelta(lr=1.0, rho=0.95, epsilon=1e-06)
     # Adam(lr = 0.00001)  # So far, adadelta seems to work the best of things I've tried
     # opt = 'adam'
@@ -416,7 +376,7 @@ def setup_model(X, class_names, nb_layers=4, try_checkpoint=True,
 
     if (not quiet):
         print("Summary of serial model (duplicated across", gpu_count, "GPUs):")
-    serial_model.summary()  # print out the model layers
+        serial_model.summary()  # print out the model layers
 
     # print modelv
     plot_model(serial_model, to_file='model.png', show_shapes=True
