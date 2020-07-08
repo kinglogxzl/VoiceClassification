@@ -1,55 +1,247 @@
+import os
+
 from data.datautils import load_audio, make_layered_melgram
-from network.models import setup_model, MyCNN_Keras2
+from network.models import MyCNN_Keras2
 from data.process_data import get_canonical_shape
 import numpy as np
-from keras.models import Sequential, Model, load_model, save_model
+from keras.models import load_model
 
-def convert_one_file(file_path,resample, mono=False,
-                     max_shape=(1, 432449),mels=96, phase=False):
-    # infilename = class_files[file_index]
+
+# 默认参数是与模型绑定的
+def convert_one_file(file_path, resample=16000, mono=False, max_shape=(1, 432449), mels=64, phase=False):
     audio_path = file_path
-    # if not audio_path[-3:] == 'wav':
-    #     return
-    # if (0 == file_index % printevery) or (file_index+1 == len(class_files)):
-    #     print("\r Processing class ",class_index+1,"/",nb_classes,": \'",classname,
-    #         "\', File ",file_index+1,"/", n_load,": ",audio_path,"                             ",
-    #         sep="",end="\r")
     sr = None
     if (resample is not None):
         sr = resample
     signal, sr = load_audio(audio_path, mono=mono, sr=sr)
 
     # Reshape / pad so all output files have same shape
-    shape = get_canonical_shape(signal)     # either the signal shape or a leading one
+    shape = get_canonical_shape(signal)  # either the signal shape or a leading one
     # print(shape)
-    if(shape[1]>432449):
+    if (shape[1] > 432449):
         raise Exception("音频长度过大")
-    if (shape != signal.shape):             # this only evals to true for mono
+    if (shape != signal.shape):  # this only evals to true for mono
         signal = np.reshape(signal, shape)
-        #print("...reshaped mono so new shape = ",signal.shape, end="")
-    #print(",  max_shape = ",max_shape,end="")
-    padded_signal = np.zeros(max_shape)     # (previously found max_shape) allocate a long signal of zeros
+        # print("...reshaped mono so new shape = ",signal.shape, end="")
+    # print(",  max_shape = ",max_shape,end="")
+    padded_signal = np.zeros(max_shape)  # (previously found max_shape) allocate a long signal of zeros
     use_shape = list(max_shape[:])
-    use_shape[0] = min( shape[0], max_shape[0] )
-    use_shape[1] = min( shape[1], max_shape[1] )
-    #print(",  use_shape = ",use_shape)
+    use_shape[0] = min(shape[0], max_shape[0])
+    use_shape[1] = min(shape[1], max_shape[1])
+    # print(",  use_shape = ",use_shape)
     padded_signal[:use_shape[0], :use_shape[1]] = signal[:use_shape[0], :use_shape[1]]
 
     layers = make_layered_melgram(padded_signal, sr, mels=mels, phase=phase)
 
-    return np.expand_dims(layers, axis=1)
+    # print(layers.shape)
+    return layers
 
-X = convert_one_file("./222.wav",resample=16000)
-weights_file="/weights/weights_7250.hdf5"
-# model, serial_model = setup_model(X_train, class_names, weights_file=weights_file, reshape_x=reshape_x,
-#                                   drop_out_arg=drop_out_arg)
-# serial_model = MyCNN_Keras2(X.shape, nb_classes=len(class_names), nb_layers=nb_layers, reshape_x=reshape_x,
-#                                 drop_out_arg=drop_out_arg)
-serial_model = MyCNN_Keras2(X.shape, nb_classes=163, nb_layers=4, reshape_x=52,
-                                drop_out_arg=[0,0,0,0,0])
-loaded_model = load_model(weights_file)  # strip any previous parallel part, to be added back in later
-serial_model.set_weights(loaded_model.get_weights())  # assign weights based on checkpoint
 
-pre = serial_model.predict(X)
-print(pre.shape())
+# 默认参数是与模型绑定的
+def predict_one(predict, weights_file, topK, nb_classes=163, nb_layers=4, reshape_x=52, drop_out_arg=[0, 0, 0, 0, 0]):
+    # 与模型绑定
+    class_names = [
+        '0', '1', '101', '102', '103', '104', '108', '113', '116', '117', '119', '122', '126', '127', '128', '13',
+        '133', '137', '138', '14', '145', '146', '147', '148', '15', '153', '155', '159', '160', '162', '167', '168',
+        '169', '170', '171', '172', '174', '175', '176', '177', '178', '18', '180', '184', '185', '186', '187', '188',
+        '19', '192', '194', '195', '196', '197', '198', '199', '2', '20', '200', '201', '202', '203', '204', '205',
+        '208', '209', '21', '210', '211', '212', '218', '219', '22', '220', '223', '224', '225', '226', '23', '233',
+        '234', '235', '237', '238', '239', '24', '240', '241', '244', '245', '246', '247', '248', '250', '251', '252',
+        '254', '256', '257', '258', '259', '265', '266', '267', '268', '269', '270', '271', '272', '273', '274', '275',
+        '276', '278', '279', '280', '281', '3', '30', '33', '34', '38', '39', '44', '45', '48', '49', '5', '50', '51',
+        '52', '53', '54', '55', '56', '57', '58', '59', '6', '60', '61', '62', '63', '66', '69', '7', '72', '73', '74',
+        '75', '76', '77', '78', '79', '8', '80', '81', '82', '89', '9', '90', '91', '92']
+    # 与模型绑定
+    class2content = {'0': '账户管理=账户管理',
+                     '1': '我的账户=我的账户',
+                     '2': '交易明细=交易明细|交易记录',
+                     '3': '账户余额=账户余额|余额查询|查余额|我有多少钱',
+                     '5': '账户挂失=账户挂失',
+                     '6': '关联账户管理=关联账户|关联账户管理',
+                     '7': 'Ⅱ、Ⅲ类账户管理=二三类账户管理|二三类账户|二类户|三类户',
+                     '8': '保号换卡预约=保号换卡|换卡预约|保号换卡预约',
+                     '9': '无卡取现=无卡取现',
+                     '13': '快捷支付明细=快捷支付|快捷支付明细',
+                     '14': '他行账户管理=他行账户管理',
+                     '15': '他行账户签约=他行账户签约',
+                     '18': '协议管理=协议|管理|协议管理',
+                     '19': '他行账户查询=他行账户查询',
+                     '20': '转账支付=转账支付',
+                     '21': '自助转账=自助转账',
+                     '22': '转账查询=转账查询',
+                     '23': '回单查询=查回单|回单查询',
+                     '24': '手机号转账=手机号转账',
+                     '30': '收款付款=收款付款',
+                     '33': '银证转账=银证转账',
+                     '34': '二维码收付款=二维码收付款',
+                     '38': '云闪付=云闪付',
+                     '39': '资金归集=资金归集',
+                     '44': '他行账户收款=他行账户收款',
+                     '45': '收款人管理=收款人|登记簿|收款人管理|登记簿管理',
+                     '48': '贷款服务=贷款服务',
+                     '49': '我的贷款=我的贷款',
+                     '50': '借钱=借钱|借款|我要借钱',
+                     '51': '还钱=还钱|还款|我要还款|我要还钱',
+                     '52': '贷款查询=贷款查询',
+                     '53': '贷款预约=贷款预约',
+                     '54': '线上贷款=我要贷款|线上贷款',
+                     '55': '信息变更申请=信息变更|信息变更申请|贷款信息变更',
+                     '56': '爱房估值=爱房估值|房产估值|房子估值|房子值多少钱',
+                     '57': '商户管理=商户管理',
+                     '58': '商户绑定=商户绑定',
+                     '59': '收银通知=收银通知',
+                     '60': '收款明细查询=收款明细|收款明细查询',
+                     '61': '小微商户申请=小微商户|小微商户申请',
+                     '62': '商户入账查询=商户入账|商户进账|商户入账查询',
+                     '63': 'POS入账查询=pos入账查询|ps入账查询',
+                     '66': '微信支付宝对账查询=微信支付宝对账查询',
+                     '69': '农信银渠道POS查询=农信银渠道pos查询|农信银渠道ps查询',
+                     '72': '智能厅堂=智能厅堂',
+                     '73': '银行网点=银行网点',
+                     '74': '预约排号=预约排号|我要预约|我要排号',
+                     '75': '对公预约=对公预约',
+                     '76': '信用卡=信用卡',
+                     '77': '信用卡账户=信用卡账户|我的信用卡',
+                     '78': '我的账单=信用卡账单|我的账单',
+                     '79': '我的卡积分=我的卡积分|我的积分',
+                     '80': '信用卡还款=信用卡还款',
+                     '81': '信用卡转账=信用卡转账',
+                     '82': '信用卡分期=信用卡分期',
+                     '89': '卡片申请=卡片申请|信用卡申请',
+                     '90': '进度查询=进度查询',
+                     '91': '信用卡激活=信用卡激活',
+                     '92': '信用卡管理=信用卡管理',
+                     '101': '储蓄服务=储蓄服务',
+                     '102': '定活互转=定活互转|定转活|活转定',
+                     '103': '通知存款=通知存款',
+                     '104': '益农存=益农存|一农村|艺农村|艺侬存|你农村|地农村',
+                     '108': '定活通=定活通',
+                     '113': '大额存单=大额存单',
+                     '116': '财富盈产品=财富盈|财富赢|财富云|产品|财富盈产品|财富赢产品|财富云产品',
+                     '117': '聚鑫宝=聚鑫宝',
+                     '119': '天添惠盈=天添惠盈',
+                     '122': '结构性存款=结构性存款',
+                     '126': '惠农存=惠农存',
+                     '127': '投资理财=投资理财',
+                     '128': '理财服务=理财服务',
+                     '133': '购汇结汇=购汇结汇',
+                     '137': '贵金属钱包=贵金属|贵金属钱包',
+                     '138': '基金服务=基金服务',
+                     '145': '生活服务=生活服务',
+                     '146': '生活缴费=生活缴费|生活交费|交电费|缴电费|交水费|缴水费|交煤气费|交燃气费|缴煤气费|缴燃气费',
+                     '147': '社会保险=社会保险',
+                     '148': '市民卡充值=市民卡充值',
+                     '153': '公积金业务=公积金业务',
+                     '155': '医疗挂号=医疗挂号',
+                     '159': '公交乘车码=乘车码|公交乘车码|我要坐车|我要乘车',
+                     '160': '车生活=车生活',
+                     '162': '代驾=代驾|代价|我要代驾',
+                     '167': '滴滴出行=滴滴出行',
+                     '168': '学费缴纳=学费缴纳|交学费|我要交学费',
+                     '169': '校园卡=校园卡',
+                     '170': '校园卡充值=校园卡充值',
+                     '171': '充值记录=校园卡充值查询|校园卡充值记录',
+                     '172': '消费明细查询=校园卡消费明细|校园卡消费查询|校园卡消费明细查询',
+                     '174': '一卡通挂失=校园卡挂失|一卡通挂失',
+                     '175': '党费缴费=交党费|我要交党费',
+                     '176': '其他缴费=其他缴费|其他交费',
+                     '177': '网上商城=网上商城|在线商城|买东西|我要买东西|我要逛逛',
+                     '178': '手机充值=手机充值|手机缴费',
+                     '180': '旅游年卡=买年卡|我要买年卡|旅游年卡//没有该功能（分配了子项）',
+                     '184': '酒店预订=预定|订酒店|我要订酒店|酒店预订',
+                     '185': '美团外卖=叫外卖|我要叫外卖|美团外卖',
+                     '186': '5元观影=五元观影|五块钱看电影|我要看电影',
+                     '187': '瑞优生活=瑞优生活',
+                     '188': '电影=电影|电影票|买电影票',
+                     '192': '视频会员=视频会员|视频会员充值',
+                     '194': '学费代扣=学费代扣|学费代缴|学费代交|代扣学费|代缴学费|代交学费',
+                     '195': '打车出行=打车|我要打车|我要叫车|打车出行',
+                     '196': '汽车票=汽车票|买汽车票|买车票',
+                     '197': '机票=机票|买机票',
+                     '198': '火车票=火车票|高铁票|买火车票|买高铁票',
+                     '199': '酒店=酒店|订酒店',
+                     '200': '景点门票=景点|门票|我要买门票|景点门票',
+                     '201': '欢乐果园=欢乐果园',
+                     '202': '电子社保卡=电子社保卡',
+                     '203': '税银社保缴费=社保缴费|税银社保缴费|顺盈社保缴费|水银社保缴费',
+                     '204': '仪征购票=仪征购票',
+                     '205': '卡券活动=卡券活动',
+                     '208': '安全中心=安全中心',
+                     '209': '预留信息=预留信息|预留信息管理',
+                     '210': '证件更新=证件更新',
+                     '211': '短信签约=短信签约',
+                     '212': '登录管理=登陆管理|登录管理',
+                     '218': '限额管理=限额管理',
+                     '219': '设备管理=设备管理',
+                     '220': '手机支付管理=手机支付管理',
+                     '223': '快捷支付管理=快捷支付|快捷支付管理',
+                     '224': '条码支付管理=条码支付|条码支付管理',
+                     '225': '云闪付管理=云闪付|云闪付管理',
+                     '226': '交易安全锁=交易安全锁|交易安全所',
+                     '233': '修改PIN码=修改牝马|修改拼吗|修改聘嘛|修改平吗|修改病吗|修改聘吗|修改病嘛',
+                     '234': '绑定动态口令=动态口令|绑定动态口令',
+                     '235': '操作记录查询=查询|操作记录|操作记录查询',
+                     '237': '个人信息维护=个人信息维护',
+                     '238': '捷支付=捷支付',
+                     '239': '其他=其他',
+                     '240': '金融助手=金融助手',
+                     '241': '消息中心=消息中心',
+                     '244': '使用向导=使用向导',
+                     '245': '联系我们=联系我们',
+                     '246': '积分查询=查积分|我的积分|积分查询',
+                     '247': '版本信息=版本信息',
+                     '248': '商户查询=商户查询',
+                     '250': '扫一扫',
+                     '251': '医疗保险',
+                     '252': '手机银行/网上银行/app',
+                     '254': '银行卡激活/注销',
+                     '256': '卡号查询',
+                     '257': '开户行查询',
+                     '258': '收款语音',
+                     '259': '后台运行',
+                     '265': '行号查询',
+                     '266': '查电子发票=电子发票|发票',
+                     '267': '人脸识别',
+                     '268': '转账权限',
+                     '269': '查看证件类型',
+                     '270': '银行卡状态查询',
+                     '271': '银行卡升级',
+                     '272': '一卡通升级',
+                     '273': '结清证明',
+                     '274': '我要退款',
+                     '275': '睡眠状态',
+                     '276': '相机权限',
+                     '278': '纪念币',
+                     '279': '关闭自动整存整取',
+                     '280': '续约',
+                     '281': '修改密码'}
+    serial_model = MyCNN_Keras2(predict.shape, nb_classes=nb_classes, nb_layers=nb_layers, reshape_x=reshape_x,
+                                drop_out_arg=drop_out_arg)
+    loaded_model = load_model(weights_file)
+    serial_model.set_weights(loaded_model.get_weights())
+    pre = serial_model.predict(predict)
+    score = pre.squeeze()
+    score = np.sort(score)[::-1]
+    predict_re = np.argsort(pre, axis=1)
+    predict_re = predict_re.squeeze()[::-1]
+    print("该wav文件的预测类别的Top{}为(可能性依次递减)：".format(topK))
+    for i in range(topK):
+        print(class2content[class_names[int(predict_re[i])]], score[i])
 
+
+if __name__ == '__main__':
+    import argparse
+
+    parser = argparse.ArgumentParser(description="predict one wav file using trained models")
+    parser.add_argument('-w', '--weights',  # nargs=1, type=argparse.FileType('r'),
+                        help='weights file (in .hdf5)', default="./weights/weights_merge_74.hdf5")
+    parser.add_argument('-f', "--file", help='wav file waiting for prediction(in .wav)',
+                        default="./predict_wavfile/20191219195144472123.wav")
+    parser.add_argument('--topK', type=int, default=5, help="predict how many classes")
+    parser.add_argument('--gpu', default='5', type=str, help="choose which gpu to predict")
+
+    args = parser.parse_args()
+
+    os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
+    X = convert_one_file(args.file)
+    predict_one(predict=X, weights_file=args.weights, topK=args.topK)

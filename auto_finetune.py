@@ -38,7 +38,7 @@ if __name__ == '__main__':
         # 准备新数据
         # 1.计算label分布
         # analysis_lable(pre_dict=pre_dict, pre_path='./data/auto_finetune/dir_label/', out_label='./lable_test2.txt',html_path='./')
-        # analysis_lable(pre_dict=pre_dict, pre_path=pre_path, out_label=out_label, html_path=html_path)
+        analysis_lable(pre_dict=pre_dict, pre_path=pre_path, out_label=out_label, html_path=html_path)
 
         # 2.将原始数据分类，音频文件按类别存储
         label_process(file=out_label, data_path=data_path, source_path=source_path)
