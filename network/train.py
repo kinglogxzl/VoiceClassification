@@ -30,6 +30,7 @@ def train_network(weights_file="weights.hdf5", classpath="Preproc/Train/",
     X_train, Y_train, paths_train, class_names = build_dataset(path=classpath,
                                                                batch_size=batch_size, tile=tile,
                                                                max_per_class=max_per_class)
+    print("#####class_names = ",class_names)
     X_test, Y_test, paths_test, class_names_test = build_dataset(path=classpath + "../Test/", batch_size=batch_size,
                                                                  tile=tile, max_per_class=int(max_per_class / 8 * 2))
     print("============================LOAD DATASET============================")
@@ -95,23 +96,22 @@ def train_network(weights_file="weights.hdf5", classpath="Preproc/Train/",
     c_num_to_name = {}
     labelf_name = '/home/qjsun/work/VoiceClassification/data/per_label.txt'
     f = codecs.open(labelf_name, 'r', encoding='utf-8')
-    if only_test:
-        for line in f.readlines():
-            item = line.strip().split('\t')
-            c_num_to_name[item[1]] = item[0]
-        for i, item in enumerate(predict_re):
-            item = item[::-1][:5]
-            if item[0] == Y_test[i]:
-                correct_class[item[0]] += 1
-                correct_sum += 1
-            else:
-                with open("./false_data.txt", 'a', encoding="utf-8") as f:
-                    f.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(paths_test[i], c_num_to_name[class_names[Y_test[i]]],
-                                                                  c_num_to_name[class_names[item[0]]],score[i][item[0]],
-                                                                  c_num_to_name[class_names[item[1]]],score[i][item[1]],
-                                                                  c_num_to_name[class_names[item[2]]],score[i][item[2]],
-                                                                  c_num_to_name[class_names[item[3]]],score[i][item[3]],
-                                                                  c_num_to_name[class_names[item[4]]],score[i][item[4]]))
+    for line in f.readlines():
+        item = line.strip().split('\t')
+        c_num_to_name[item[1]] = item[0]
+    for i, item in enumerate(predict_re):
+        item = item[::-1][:5]
+        if item[0] == Y_test[i]:
+            correct_class[item[0]] += 1
+            correct_sum += 1
+        else:
+            with open("./false_data.txt", 'a', encoding="utf-8") as f:
+                f.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(paths_test[i], c_num_to_name[class_names[Y_test[i]]],
+                                                              c_num_to_name[class_names[item[0]]],score[i][item[0]],
+                                                              c_num_to_name[class_names[item[1]]],score[i][item[1]],
+                                                              c_num_to_name[class_names[item[2]]],score[i][item[2]],
+                                                              c_num_to_name[class_names[item[3]]],score[i][item[3]],
+                                                              c_num_to_name[class_names[item[4]]],score[i][item[4]]))
     # 按照正确数量排序
     correct_class = sorted(correct_class.items(), key=lambda item: item[1], reverse=True)
     import codecs
@@ -123,13 +123,13 @@ def train_network(weights_file="weights.hdf5", classpath="Preproc/Train/",
         c_num_to_name[item[1]] = item[0]
     print("=============总准确率=============")
     print("总样本量: ", len(Y_test), "\t准确率: ", round(correct_sum / len(Y_test), 4))
-    print("=============各类别回归率=============")
+    print("=============各类别准确率=============")
     for key, value in correct_class:
         if class_names[key] not in c_num_to_name.keys():
             cla_name = '*****标识错误*****'
         else:
             cla_name = c_num_to_name[class_names[key]]
-        print("类别: ", class_names[key], "\t样本量: ", class_acc[key], "\t回归率: ", round(value / class_acc[key], 4),
+        print("类别: ", class_names[key], "\t样本量: ", class_acc[key], "\t准确率: ", round(value / class_acc[key], 4),
               '\t类别名:', cla_name)
 
 

@@ -12,10 +12,10 @@ from data.process_data import preprocess_dataset
 
 from network.train import train_network
 
-PREPARE_DATA = False  # 是否有新数据需要预处理
+PREPARE_DATA = False # 是否有新数据需要预处理
 
 if __name__ == '__main__':
-    mark = 'merge'  # 标记不同时期的数据
+    mark = 'nodup'  # 标记不同时期的数据
     # key中文件存放wav文件名和具体类别，value表示wav文件的所在文件夹
     pre_dict = {"(geren)label.txt": "jsnx20191111", "zuixin.txt": "jsnx20191121-20200109",
                 "test.txt": "jsnx20191121-20200109", "zonghe.txt": "jsnx20191121-20200109",
@@ -47,9 +47,7 @@ if __name__ == '__main__':
         preprocess_dataset(inpath=data_path, outpath=outpath, resample=16000, mels=64)
 
     # 使用新数据集进行训练
-
-    # 指定训练gpu
-    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+    os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
     import argparse
 
@@ -57,7 +55,7 @@ if __name__ == '__main__':
     weight_name = "weights_merge_7250.hdf5"
     weights = weight_save_path + weight_name
     classpath = outpath + "Train/"
-    epochs = 100
+    epochs = 300
     batch_size = 40
     val = 0.1
     maxper = 0
@@ -76,19 +74,23 @@ if __name__ == '__main__':
     parser.add_argument("--test", help="only test", action="store_true")
     parser.add_argument('-m', '--maxper', type=int, default=maxper, help="Max examples per class")
     parser.add_argument('-r', '--reshape', type=int, default=reshape_x, help="for LSTM Reshape Size")
-    parser.add_argument('--tb_log', default='log', type=str, help="GPU used")
+    parser.add_argument('--tb_log', default='log20over', type=str, help="GPU used")
 
-    drop_out_args = [[0.2, 0.2, 0.3, 0.3, 0.004], [0.2, 0.2, 0.3, 0.3, 0.007], [0.3, 0.3, 0.4, 0.4, 0.01], [0.4, 0.4, 0.5, 0.5, 0.02]]  # [0.2, 0.2, 0.3, 0.3, 0.004], [0.3, 0.3, 0.35, 0.35, 0.01],[0.4, 0.4, 0.5, 0.5, 0.02][0.4, 0.4, 0.5, 0.5, 0.04],[0.2, 0.2, 0.3, 0.3, 0.004], [0.2, 0.2, 0.3, 0.3, 0.007], [0.3, 0.3, 0.4, 0.4, 0.01],,[0.4, 0.4, 0.5, 0.5, 0.015],[0.4, 0.4, 0.5, 0.5, 0.03]
+    # drop_out_args = [[0.3, 0.3, 0.4, 0.4, 0.01], [0.4, 0.4, 0.5, 0.5, 0.02], [0.5, 0.5, 0.55, 0.55, 0.025]]  # ,[0.2,0.2,0.3,0.3,0.005][0.2, 0.2, 0.3, 0.3, 0.004], [0.2, 0.2, 0.3, 0.3, 0.007], 
+    # drop_out_args = [[0.2, 0.2, 0.3, 0.3, 0.004], [0.3, 0.3, 0.35, 0.35, 0.01],[0.45, 0.45, 0.56, 0.56, 0.02]]
+    drop_out_args = [[0.2, 0.2, 0.3, 0.3, 0.005]] #[0.2, 0.2, 0.3, 0.3, 0.004], [0.3, 0.3, 0.35, 0.35, 0.01],[0.4, 0.4, 0.5, 0.5, 0.02][0.4, 0.4, 0.5, 0.5, 0.04],[0.2, 0.2, 0.3, 0.3, 0.004], [0.2, 0.2, 0.3, 0.3, 0.007], [0.3, 0.3, 0.4, 0.4, 0.01],,[0.4, 0.4, 0.5, 0.5, 0.015],[0.4, 0.4, 0.5, 0.5, 0.03]
+    #                  [0.4, 0.4, 0.5, 0.5, 0.02]]  # [0.2, 0.2, 0.3, 0.3, 0.004],,[0.4, 0.4, 0.5, 0.5, 0.015],[0.4, 0.4, 0.5, 0.5, 0.02]
+    # ,[0.3, 0.3, 0.4, 0.4, 0.01],[0.4, 0.4, 0.5, 0.5, 0.015],[0.4, 0.4, 0.5, 0.5, 0.02]
     index = 0
     args = parser.parse_args()
     for drop_out_arg in drop_out_args:
         train_network(weights_file=args.weights, classpath=args.classpath, epochs=args.epochs,
-                      batch_size=args.batch_size, val_split=args.val, tile=args.tile, max_per_class=args.maxper,
-                      only_test=args.test, reshape_x=args.reshape, drop_out_arg=drop_out_arg, tb_log=args.tb_log)
+                     batch_size=args.batch_size, val_split=args.val, tile=args.tile, max_per_class=args.maxper,
+                     only_test=args.test, reshape_x=args.reshape, drop_out_arg=drop_out_arg, tb_log=args.tb_log+str(index))
         for filename in os.listdir(weight_save_path):  # 用os.walk方法取得path路径下的文件夹路径，子文件夹名，所有文件名
             if filename == weight_name:
                 index = index + 1
                 new_name = filename.replace('.hdf5', '_' + str(index) + '.hdf5')  # 为文件赋予新名字
                 shutil.copyfile(os.path.join(weight_save_path, filename),
-                                os.path.join(weight_save_path, new_name))  # 复制并重命名文件
+                               os.path.join(weight_save_path, new_name))  # 复制并重命名文件
                 print(filename, "copied as", new_name)
