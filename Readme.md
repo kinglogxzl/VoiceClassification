@@ -21,6 +21,9 @@
     3. 关于训练参数与train.py中的基本一致
        除了drop_out_args, 可以输入多组dropout和l2损失的参数值进行训练
 
+### predict_one_wav.py 使用说明
+    配置相关参数，对单一wav文件进行测试
+    
 # 细节说明
 
 * mel文件特征：  96 * maxtime_length
