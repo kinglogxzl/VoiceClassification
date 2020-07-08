@@ -5,5 +5,4 @@ pip install numba==0.48.0
 pip install imageio
 pip install scikit-image
 pip install tqdm
-sudo ldconfig /usr/local/cuda-9.0/lib64
 pip install pydot
