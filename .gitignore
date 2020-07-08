@@ -2,3 +2,7 @@
 .idea
 .ipynb_checkpoints
 *.pyc
+*.html
+model.png
+test_7224.txt
+第一个label类别分布.png
